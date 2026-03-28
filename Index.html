@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layana — Master Your Retirement Readiness</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#22C55E">
+    <meta name="description" content="Layana simplifies retirement planning with a powerful score, detailed projections, and actionable advice.">
+
+    <style>
+        [x-cloak] { display: none !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.5s ease; overflow-x: hidden; }
+
+        /* Define Theme Variables based on Alpine state */
+        :root { --accent: #22C55E; --accent-light: #4ade80; --accent-dark: #166534; }
+
+        .theme-dark { background-color: #000000; color: #FFFFFF; --bg-card: #0A0A0A; --border-card: #1A1A1A; --text-muted: #6B7280; --store-btn: #111; }
+        .theme-sunset { background-color: #F8FAFC; color: #0F172A; --bg-card: #FFFFFF; --border-card: #E2E8F0; --text-muted: #64748B; --store-btn: #FFF; }
+
+        .btn-shadow { box-shadow: 0 10px 40px -10px var(--accent); }
+        .data-table-row:nth-child(even) { background-color: rgba(128,128,128,0.03); }
+        .glass-modal { backdrop-filter: blur(20px); background: rgba(0,0,0,0.8); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Specific Logo Locking per Image */
+        .logo-bars { display: flex; align-items: flex-end; gap: 4px; }
+        .logo-bar-1 { w: 10px; h: 18px; border-radius: 99px; background-color: var(--accent-light); }
+        .logo-bar-2 { w: 10px; h: 32px; border-radius: 99px; background-color: var(--accent-dark); }
+    </style>
+</head>
+<body :class="theme === 'dark' ? 'theme-dark' : 'theme-sunset'" x-data="layanaApp()" x-init="checkDevice()" class="antialiased">
+
+    <nav class="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md border-b border-gray-500/10">
+        <div class="flex items-center gap-3">
+            <div class="logo-bars">
+                <div class="w-2.5 h-4.5 rounded-full logo-bar-1 transition-colors duration-500"></div>
+                <div class="w-2.5 h-8 rounded-full logo-bar-2 transition-colors duration-500"></div>
+            </div>
+            <div class="flex flex-col leading-none">
+                <span class="font-extrabold text-2xl tracking-tighter">Retirement Score</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-emerald-600 transition-colors duration-500">by layana</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button @click="toggleTheme()" class="w-10 h-10 rounded-full bg-gray-500/10 flex items-center justify-center hover:scale-110 transition active:scale-95">
+                <span x-text="theme === 'dark' ? '☀️' : '🌙'"></span>
+            </button>
+            <button x-show="!isMobile" @click="openQR()" class="accent-bg px-8 py-3 rounded-full font-black text-sm transition hover:opacity-90 active:scale-95 btn-shadow">Get the App</button>
+            <a x-show="isMobile" href="#install" class="accent-bg px-8 py-3 rounded-full font-bold text-sm transition btn-shadow">Install Now</a>
+        </div>
+    </nav>
+
+    <header class="max-w-7xl mx-auto px-6 py-16 md:py-32 grid md:grid-cols-2 gap-24 items-center">
+        <div class="space-y-12">
+            <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-gray-500/10 text-xs font-black uppercase tracking-[0.2em] accent-text border border-emerald-900/50">Beta Release 1.0</div>
+            <h1 class="text-6xl md:text-8xl font-black leading-[1.0] tracking-tighter">
+                Master Your <br>Readiness. <br><span class="accent-text transition-colors duration-500">Simple.</span>
+            </h1>
+            <p class="text-xl opacity-70 max-w-xl leading-relaxed font-medium">
+                Retirement Score by layana is the definitive mobile-first tool for understanding your financial future. We replace complex spreadsheets with a powerful score, crystal-clear projections, and actionable advice.
+            </p>
+            <div class="flex gap-4 items-center">
+                <button @click="openQR()" class="accent-bg px-12 py-5 rounded-3xl font-black text-lg shadow-2xl transition hover:scale-[1.03] active:scale-95 btn-shadow">Calculate Your Score</button>
+                <a href="#explain" class="font-bold text-sm opacity-60 hover:opacity-100 transition">How it Works →</a>
+            </div>
+        </div>
+
+        <div class="relative flex justify-center">
+            <div class="card-bg rounded-[4rem] p-12 border border-gray-500/10 shadow-[0_40px_100px_-20px_rgba(34,197,94,0.15)] relative z-10">
+                <div class="text-center space-y-2 mb-10">
+                    <p class="text-gray-500 text-[10px] font-black uppercase tracking-widest">Projection Summary</p>
+                    <div class="inline-flex items-center px-3 py-1 rounded-full border border-emerald-500/50 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+                        <span class="w-1.5 h-1.5 rounded-full accent-bg mr-2 animate-pulse transition-colors duration-500"></span>
+                        On Track
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center mb-10 relative">
+                    <div class="w-60 h-60 border-[16px] border-emerald-950 rounded-full flex items-center justify-center transition-colors duration-500">
+                        <div class="text-center">
+                            <span class="text-8xl font-black leading-none tracking-tight transition-colors duration-500">150</span>
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] block mt-2">Score</span>
+                        </div>
+                    </div>
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-emerald-500 rounded-full border-4 border-black transition-colors duration-500"></div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="h-4 w-full bg-emerald-950 rounded-full overflow-hidden transition-colors duration-500">
+                        <div class="h-full bg-emerald-500 w-[85%] rounded-full transition-all duration-1000"></div>
+                    </div>
+                    <div class="flex justify-between text-[11px] font-black opacity-50 uppercase tracking-widest">
+                        <span>Current Plan</span>
+                        <span>Goal: $4.3M</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute -inset-16 bg-emerald-500 opacity-5 blur-[120px] rounded-full transition-opacity duration-500"></div>
+        </div>
+    </header>
+
+    <section id="explain" class="border-y border-gray-500/10 bg-white/5 py-32 px-6">
+        <div class="max-w-7xl mx-auto space-y-32">
+
+            <div class="text-center max-w-2xl mx-auto space-y-6">
+                <h2 class="text-xs font-black uppercase tracking-[0.4em] accent-text transition-colors duration-500">How it Works</h2>
+                <p class="text-5xl font-extrabold tracking-tighter leading-tight">Complex math, distilled into seconds.</p>
+                <p class="text-lg opacity-60">Answer five basic questions. We run thousands of calculations based on market data, inflation, and growth models to deliver a crystal clear picture.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-20 items-center">
+                <div class="space-y-6 order-2 md:order-1">
+                    <div class="text-4xl font-extrabold tracking-tight">Step 1: Simple Questions.</div>
+                    <p class="text-gray-500 leading-relaxed font-medium">Layana is designed for everyone, not just finance experts. We only need the numbers you already know.</p>
+                    <ul class="text-sm space-y-3 pt-4 text-gray-400 font-semibold no-scrollbar">
+                        <li>→ Current Age and Target Retirement Age</li>
+                        <li>→ Household Income & Contribution Rates</li>
+                        <li>→ Your Current Savings Balance</li>
+                        <li>→ Employer Match & Social Security</li>
+                    </ul>
+                </div>
+                <div class="card-bg p-10 rounded-3xl border border-gray-500/10 shadow-xl space-y-6 transform md:rotate-1 order-1 md:order-2">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Current Age</label>
+                        <div class="p-5 bg-gray-500/5 rounded-2xl border border-gray-500/10 text-lg font-bold">40</div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Retire At Age</label>
+                        <div class="p-5 bg-gray-500/5 rounded-2xl border border-gray-500/10 text-lg font-bold text-emerald-500 transition-colors duration-500">67</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-20 items-center">
+                <div class="card-bg p-8 rounded-3xl border border-gray-500/10 shadow-xl space-y-6 transform md:-rotate-1 relative overflow-hidden">
+                    <p class="text-[10px] font-black opacity-30 uppercase tracking-widest">Advanced Ledger Preview</p>
+                    <div class="bg-gray-500/5 p-4 rounded-xl border border-gray-500/10 space-y-2 no-scrollbar font-mono text-xs opacity-50">
+                        <div>// Calculating Growth...</div>
+                        <div>balance = initial * pow(1 + returnRate, years)</div>
+                        <div>inflatedNeed = currentExpenses * pow(1 + inflation, years)</div>
+                        <div>matchPct = employerRate * salary</div>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="text-4xl font-extrabold tracking-tight">Step 2: We Do the Math.</div>
+                    <p class="text-gray-500 leading-relaxed font-medium">Our algorithm takes your inputs and creates a model that accounts for market appreciation, salary growth, inflation, and complex employer match structures to calculate your true readiness.</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-20 items-center">
+                <div class="space-y-6 order-2 md:order-1">
+                    <div class="text-4xl font-extrabold tracking-tight">Step 3: Actionable Advice.</div>
+                    <p class="text-gray-500 leading-relaxed font-medium">A score is just the beginning. Layana interprets the results to provide the "Best Next Move." Try saving $200 more a month, delaying retirement by one year, or changing your investment style to Aggressive—and watch your score update instantly.</p>
+                </div>
+                <div class="accent-bg text-black p-10 rounded-[2rem] space-y-6 transform md:rotate-1 shadow-2xl transition-colors duration-500 order-1 md:order-2">
+                    <p class="text-[10px] font-black opacity-50 uppercase tracking-widest">Layana's Best Next Move</p>
+                    <h4 class="text-2xl font-extrabold tracking-tight">Keep Monitoring Your Plan</h4>
+                    <p class="text-sm font-medium leading-relaxed opacity-70">You are on track to finish with the target reserve. Re-run this check when your income assumptions change.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-32 space-y-20">
+        <div class="grid md:grid-cols-12 gap-10 items-end">
+            <div class="md:col-span-6 space-y-4">
+                <h2 class="text-5xl font-black tracking-tighter">Your Plan, Detatiled <br>Year-by-Year.</h2>
+                <p class="text-gray-500 leading-relaxed font-medium">Layana doesn't hide the numbers. We provide a full ledger showing the contribution, appreciation, and withdrawals for every single year, complete with specific 'Work' and 'Retire' phase badging as seen below.</p>
+            </div>
+        </div>
+
+        <div class="card-bg rounded-3xl border border-gray-500/10 shadow-2xl overflow-hidden no-scrollbar">
+            <p class="px-8 pt-8 pb-4 text-[10px] font-black opacity-30 uppercase tracking-widest">Detail View: Age 40 to 45</p>
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-gray-500/5 text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                    <tr>
+                        <th class="px-8 py-5">Age</th>
+                        <th class="px-8 py-5">Phase</th>
+                        <th class="px-8 py-5">Contribution</th>
+                        <th class="px-8 py-5">Appreciation</th>
+                        <th class="px-8 py-5 text-right">Balance</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-500/10 data-table-row font-medium">
+                    <tr>
+                        <td class="px-8 py-6 font-bold">40</td>
+                        <td class="px-8 py-6"><span class="bg-emerald-950 text-emerald-400 text-[9px] px-2 py-0.5 rounded font-black uppercase transition-colors duration-500">Work</span></td>
+                        <td class="px-8 py-6 text-gray-500">$48,500</td>
+                        <td class="px-8 py-6 text-emerald-500 font-bold transition-colors duration-500">+$48,750</td>
+                        <td class="px-8 py-6 text-right font-extrabold">$847,250</td>
+                    </tr>
+                    <tr>
+                        <td class="px-8 py-6 font-bold">41</td>
+                        <td class="px-8 py-6"><span class="bg-emerald-950 text-emerald-400 text-[9px] px-2 py-0.5 rounded font-black uppercase transition-colors duration-500">Work</span></td>
+                        <td class="px-8 py-6 text-gray-500">$48,990</td>
+                        <td class="px-8 py-6 text-emerald-500 font-bold transition-colors duration-500">+$55,071</td>
+                        <td class="px-8 py-6 text-right font-extrabold">$951,311</td>
+                    </tr>
+                    <tr>
+                        <td class="px-8 py-6 font-bold">42</td>
+                        <td class="px-8 py-6"><span class="bg-emerald-950 text-emerald-400 text-[9px] px-2 py-0.5 rounded font-black uppercase transition-colors duration-500">Work</span></td>
+                        <td class="px-8 py-6 text-gray-500">$49,490</td>
+                        <td class="px-8 py-6 text-emerald-500 font-bold transition-colors duration-500">+$61,835</td>
+                        <td class="px-8 py-6 text-right font-extrabold">$1,062,636</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-32 grid md:grid-cols-2 gap-20 items-center">
+        <div class="relative flex justify-center order-2 md:order-1">
+             <div class="relative w-full max-w-sm aspect-[9/18.5] bg-slate-900 rounded-[3rem] border-8 border-slate-700 p-6 flex flex-col justify-center text-center shadow-2xl relative z-10">
+                <p class="text-7xl font-black text-emerald-400 transition-colors duration-500">150</p>
+                <div class="h-1 bg-emerald-900 rounded-full mt-2 w-1/2 mx-auto transition-colors duration-500"></div>
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-700 rounded-b-xl"></div>
+             </div>
+             <div class="absolute -inset-10 accent-bg blur-[100px] rounded-full transition-opacity opacity-10 duration-500"></div>
+        </div>
+        <div class="space-y-12 order-1 md:order-2">
+            <div class="space-y-4">
+                <h2 class="text-5xl font-black tracking-tighter">Mobile-First. <br>Design-Forward.</h2>
+                <p class="text-lg opacity-60">Layana is not a ported desktop application. Every pixel is crafted for the one-handed mobile experience. It's fast, simple, and perfectly understandable without complex jargon or investment expertise required.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-10 text-center">
+                <div class="card-bg p-8 rounded-2xl border border-gray-500/10 space-y-3">
+                    <div class="text-3xl">⏱</div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">Personalized recommendations in less than 5 mins.</p>
+                </div>
+                <div class="card-bg p-8 rounded-2xl border border-gray-500/10 space-y-3">
+                    <div class="text-3xl">🤝</div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">Simple, clear numbers you can actually use.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="install" class="max-w-4xl mx-auto px-6 py-32 text-center space-y-16">
+        <div class="space-y-6">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] accent-text transition-colors duration-500">Install Layana</h3>
+            <p class="text-6xl font-black tracking-tighter">Ready to See Your Score?</p>
+            <p class="text-xl opacity-60 max-w-lg mx-auto leading-relaxed">Join thousands of users using Layana to secure their retirement readiness today. Get the full experience on iOS or Android.</p>
+        </div>
+
+        <div class="no-scrollbar">
+            <div x-show="isMobile" class="flex flex-col gap-6 sm:flex-row justify-center pt-10" x-transition>
+                <a href="#" class="store-btn flex items-center gap-4 px-10 py-5 rounded-[2rem] shadow-sm hover:scale-[1.03] transition-transform">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 21.8-88.5 21.8-11.4 0-51.1-20.8-83.6-20.8-42.3.6-81.2 24.7-102.9 62.4-44.6 77-11.4 190.6 31.1 252.3 20.8 29.8 45.8 63 77.8 61.8 30.2-1.2 41.5-19.9 77.6-19.9 36.1 0 46.5 19.9 78.2 19.3 32.7-.6 54.1-30.1 74.8-60.2 23.9-34.9 33.7-68.7 34.1-70.3-2.5-1.1-65.9-25.2-66.2-100.8zM216.5 74.4c15.8-19.2 26.5-45.8 23.6-72.4-23.4 1-52.1 15.6-68.9 35.2-15.1 17.5-28.2 44.4-25.3 70.4 25.9 2 52.7-13.9 70.6-33.2z"/></svg>
+                    <div class="text-left leading-tight"><p class="text-[10px] uppercase font-bold opacity-60">App Store</p><p class="text-lg font-extrabold">Download Now</p></div>
+                </a>
+                <a href="#" class="store-btn flex items-center gap-4 px-10 py-5 rounded-[2rem] shadow-sm hover:scale-[1.03] transition-transform">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 512 512"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-10.3 18-28.5-1.2-40.8zM104.6 499l220.7-221.3 60.1 60.1L104.6 499z"/></svg>
+                    <div class="text-left leading-tight"><p class="text-[10px] uppercase font-bold opacity-60">Google Play</p><p class="text-lg font-extrabold">Get it on</p></div>
+                </a>
+            </div>
+
+            <div x-show="!isMobile" class="pt-10">
+                <button @click="openQR()" class="accent-bg px-12 py-5 rounded-3xl font-black text-lg btn-shadow transition hover:scale-[1.03] active:scale-95">Download via QR Code</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="max-w-7xl mx-auto px-6 py-20 border-t border-gray-500/10 flex flex-col md:flex-row justify-between items-center gap-10">
+        <div class="flex items-center gap-3">
+            <div class="flex items-end gap-1 mb-1">
+                <div class="w-2.5 h-4.5 rounded-full logo-bar-1 transition-colors duration-500"></div>
+                <div class="w-2.5 h-8 rounded-full logo-bar-2 transition-colors duration-500"></div>
+            </div>
+            <div class="text-left leading-tight">
+                <span class="text-xs font-black uppercase tracking-[0.2em] opacity-40 transition-opacity">© 2026 Retirement Score Inc.</span>
+                <span class="text-[10px] block text-emerald-600 font-bold transition-colors duration-500">Powered by layana financial technologies.</span>
+            </div>
+        </div>
+        <div class="flex gap-10 text-[10px] font-black uppercase tracking-widest opacity-40">
+            <a href="#" class="hover:opacity-100 transition">Privacy</a>
+            <a href="#" class="hover:opacity-100 transition">Terms of Service</a>
+        </div>
+    </footer>
+
+    <div x-show="showQR" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-6 glass-modal" @click.self="showQR = false">
+        <div class="bg-white text-black w-full max-w-sm rounded-[3.5rem] p-12 text-center space-y-10 shadow-2xl transform scale-105 transition-all">
+            <div class="space-y-3">
+                <h4 class="text-3xl font-black tracking-tight leading-none">Get Layana</h4>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Scan to get the mobile app</p>
+            </div>
+            <div id="qrcode" class="p-6 bg-white rounded-3xl inline-block mx-auto border-8 border-gray-100 shadow-inner"></div>
+            <button @click="showQR = false" class="w-full bg-black text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest active:scale-95 transition">Done</button>
+        </div>
+    </div>
+
+    <script>
+        function layanaApp() {
+            return {
+                theme: 'dark', // 'dark' or 'sunset'
+                showQR: false,
+                isMobile: false,
+
+                toggleTheme() {
+                    this.theme = this.theme === 'dark' ? 'sunset' : 'dark';
+                },
+
+                checkDevice() {
+                    this.isMobile = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                },
+
+                openQR() {
+                    if (this.isMobile) return; // Ignore QR on mobile
+                    this.showQR = true;
+                    // Render QR on next tick when modal exists
+                    this.$nextTick(() => {
+                        document.getElementById("qrcode").innerHTML = ""; // Clear existing
+                        new QRCode(document.getElementById("qrcode"), {
+                            text: "https://layana.app/install", // Actual app URL
+                            width: 220,
+                            height: 220,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                    });
+                }
+            }
+        }
+
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('Layana SW registered:', reg.scope);
+                }).catch(err => {
+                    console.log('SW Registration failed (this is normal during local dev):', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
